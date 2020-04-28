@@ -732,7 +732,10 @@ static int ebitmap_to_cil(struct policydb *pdb, struct ebitmap *map, int type)
 	uint32_t i;
 	char **val_to_name = pdb->sym_val_to_name[type];
 
-	ebitmap_for_each_positive_bit(map, node, i) {
+	ebitmap_for_each_bit(map, node, i) {
+		if (!ebitmap_get_bit(map, i)) {
+			continue;
+		}
 		cil_printf("%s ", val_to_name[i]);
 	}
 
@@ -859,7 +862,10 @@ static int cil_print_attr_strs(int indent, struct policydb *pdb, int is_type, vo
 
 	if (has_positive) {
 		cil_printf("(");
-		ebitmap_for_each_positive_bit(pos, node, i) {
+		ebitmap_for_each_bit(pos, node, i) {
+			if (!ebitmap_get_bit(pos, i)) {
+				continue;
+			}
 			cil_printf("%s ", val_to_name[i]);
 		}
 		cil_printf(") ");
@@ -868,7 +874,10 @@ static int cil_print_attr_strs(int indent, struct policydb *pdb, int is_type, vo
 	if (has_negative) {
 		cil_printf("(not (");
 
-		ebitmap_for_each_positive_bit(neg, node, i) {
+		ebitmap_for_each_bit(neg, node, i) {
+			if (!ebitmap_get_bit(neg, i)) {
+				continue;
+			}
 			cil_printf("%s ", val_to_name[i]);
 		}
 
@@ -990,13 +999,15 @@ static int ebitmap_to_names(struct ebitmap *map, char **vals_to_names, char ***n
 	char **name_arr;
 
 	num = 0;
-	ebitmap_for_each_positive_bit(map, node, i) {
-		if (num >= UINT32_MAX / sizeof(*name_arr)) {
-			log_err("Overflow");
-			rc = -1;
-			goto exit;
+	ebitmap_for_each_bit(map, node, i) {
+		if (ebitmap_get_bit(map, i)) {
+			if (num >= UINT32_MAX / sizeof(*name_arr)) {
+				log_err("Overflow");
+				rc = -1;
+				goto exit;
+			}
+			num++;
 		}
-		num++;
 	}
 
 	if (!num) {
@@ -1013,9 +1024,11 @@ static int ebitmap_to_names(struct ebitmap *map, char **vals_to_names, char ***n
 	}
 
 	num = 0;
-	ebitmap_for_each_positive_bit(map, node, i) {
-		name_arr[num] = vals_to_names[i];
-		num++;
+	ebitmap_for_each_bit(map, node, i) {
+		if (ebitmap_get_bit(map, i)) {
+			name_arr[num] = vals_to_names[i];
+			num++;
+		}
 	}
 
 	*names = name_arr;
@@ -1456,7 +1469,10 @@ static int role_trans_to_cil(int indent, struct policydb *pdb, struct role_trans
 
 		for (role = 0; role < num_role_names; role++) {
 			for (type = 0; type < num_type_names; type++) {
-				ebitmap_for_each_positive_bit(&rule->classes, node, i) {
+				ebitmap_for_each_bit(&rule->classes, node, i) {
+					if (!ebitmap_get_bit(&rule->classes, i)) {
+						continue;
+					}
 					cil_println(indent, "(roletransition %s %s %s %s)",
 						    role_names[role], type_names[type],
 						    pdb->p_class_val_to_name[i],
@@ -1552,7 +1568,11 @@ static int range_trans_to_cil(int indent, struct policydb *pdb, struct range_tra
 
 		for (stype = 0; stype < num_stypes; stype++) {
 			for (ttype = 0; ttype < num_ttypes; ttype++) {
-				ebitmap_for_each_positive_bit(&rule->tclasses, node, i) {
+				ebitmap_for_each_bit(&rule->tclasses, node, i) {
+					if (!ebitmap_get_bit(&rule->tclasses, i)) {
+						continue;
+					}
+
 					cil_indent(indent);
 					cil_printf("(rangetransition %s %s %s ", stypes[stype], ttypes[ttype], pdb->p_class_val_to_name[i]);
 
@@ -2074,7 +2094,10 @@ static int class_order_to_cil(int indent, struct policydb *pdb, struct ebitmap o
 	cil_indent(indent);
 	cil_printf("(classorder (");
 
-	ebitmap_for_each_positive_bit(&order, node, i) {
+	ebitmap_for_each_bit(&order, node, i) {
+		if (!ebitmap_get_bit(&order, i)) {
+			continue;
+		}
 		cil_printf("%s ", pdb->sym_val_to_name[SYM_CLASSES][i]);
 	}
 
@@ -2176,7 +2199,10 @@ static int role_to_cil(int indent, struct policydb *pdb, struct avrule_block *UN
 		if (ebitmap_cardinality(&role->roles) > 0) {
 			cil_indent(indent);
 			cil_printf("(roleattributeset %s (", key);
-			ebitmap_for_each_positive_bit(&role->roles, node, i) {
+			ebitmap_for_each_bit(&role->roles, node, i) {
+				if (!ebitmap_get_bit(&role->roles, i)) {
+					continue;
+				}
 				cil_printf("%s ", pdb->p_role_val_to_name[i]);
 			}
 			cil_printf("))\n");
@@ -2305,7 +2331,10 @@ static int user_to_cil(int indent, struct policydb *pdb, struct avrule_block *bl
 		cil_println(indent, "(userrole %s " DEFAULT_OBJECT ")", key);
 	}
 
-	ebitmap_for_each_positive_bit(&roles, node, i) {
+	ebitmap_for_each_bit(&roles, node, i) {
+		if (!ebitmap_get_bit(&roles, i)) {
+			continue;
+		}
 		cil_println(indent, "(userrole %s %s)", key, pdb->p_role_val_to_name[i]);
 	}
 
@@ -2392,7 +2421,10 @@ static int sens_order_to_cil(int indent, struct policydb *pdb, struct ebitmap or
 	cil_indent(indent);
 	cil_printf("(sensitivityorder (");
 
-	ebitmap_for_each_positive_bit(&order, node, i) {
+	ebitmap_for_each_bit(&order, node, i) {
+		if (!ebitmap_get_bit(&order, i)) {
+			continue;
+		}
 		cil_printf("%s ", pdb->p_sens_val_to_name[i]);
 	}
 
@@ -2433,7 +2465,10 @@ static int cat_order_to_cil(int indent, struct policydb *pdb, struct ebitmap ord
 	cil_indent(indent);
 	cil_printf("(categoryorder (");
 
-	ebitmap_for_each_positive_bit(&order, node, i) {
+	ebitmap_for_each_bit(&order, node, i) {
+		if (!ebitmap_get_bit(&order, i)) {
+			continue;
+		}
 		cil_printf("%s ", pdb->p_cat_val_to_name[i]);
 	}
 
@@ -2454,7 +2489,10 @@ static int polcaps_to_cil(struct policydb *pdb)
 
 	map = &pdb->policycaps;
 
-	ebitmap_for_each_positive_bit(map, node, i) {
+	ebitmap_for_each_bit(map, node, i) {
+		if (!ebitmap_get_bit(map, i)) {
+			continue;
+		}
 		name = sepol_polcap_getname(i);
 		if (name == NULL) {
 			log_err("Unknown policy capability id: %i", i);
@@ -3389,7 +3427,10 @@ static int declared_scopes_to_cil(int indent, struct policydb *pdb, struct avrul
 		}
 
 		map = decl->declared.scope[sym];
-		ebitmap_for_each_positive_bit(&map, node, i) {
+		ebitmap_for_each_bit(&map, node, i) {
+			if (!ebitmap_get_bit(&map, i)) {
+				continue;
+			}
 			key = pdb->sym_val_to_name[sym][i];
 			datum = hashtab_search(pdb->symtab[sym].table, key);
 			if (datum == NULL) {
@@ -3453,7 +3494,10 @@ static int required_scopes_to_cil(int indent, struct policydb *pdb, struct avrul
 		}
 
 		map = decl->required.scope[sym];
-		ebitmap_for_each_positive_bit(&map, node, i) {
+		ebitmap_for_each_bit(&map, node, i) {
+			if (!ebitmap_get_bit(&map, i)) {
+				continue;
+			}
 			key = pdb->sym_val_to_name[sym][i];
 
 			scope_datum = hashtab_search(pdb->scope[sym].table, key);

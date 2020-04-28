@@ -342,7 +342,9 @@ static size_t __cil_userattribute_len(struct cil_db *db, struct cil_userattribut
 	unsigned int i;
 	size_t len = 0;
 
-	ebitmap_for_each_positive_bit(attr->users, unode, i) {
+	ebitmap_for_each_bit(attr->users, unode, i) {
+		if (!ebitmap_get_bit(attr->users, i))
+			continue;
 		len += strlen(DATUM(db->val_to_user[i])->fqn);
 		len++;
 	}
@@ -452,7 +454,9 @@ static char *__cil_userattribute_to_string(struct cil_db *db, struct cil_useratt
 	char *str;
 	size_t len;
 
-	ebitmap_for_each_positive_bit(attr->users, unode, i) {
+	ebitmap_for_each_bit(attr->users, unode, i) {
+		if (!ebitmap_get_bit(attr->users, i))
+			continue;
 		str = DATUM(db->val_to_user[i])->fqn;
 		len = strlen(str);
 		memcpy(new, str, len);
@@ -1114,7 +1118,9 @@ static void cil_xperms_to_policy(FILE *out, struct cil_permissionx *permx)
 
 	fprintf(out, "%s %s {", DATUM(permx->obj)->fqn, kind);
 
-	ebitmap_for_each_positive_bit(permx->perms, node, i) {
+	ebitmap_for_each_bit(permx->perms, node, i) {
+		if (!ebitmap_get_bit(permx->perms, i))
+			continue;
 		if (need_first == CIL_TRUE) {
 			first = i;
 			need_first = CIL_FALSE;

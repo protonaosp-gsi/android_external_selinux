@@ -978,7 +978,10 @@ static size_t cats_ebitmap_len(struct ebitmap *cats, char **val_to_name)
 	size_t len = 0;
 
 	range = 0;
-	ebitmap_for_each_positive_bit(cats, node, i) {
+	ebitmap_for_each_bit(cats, node, i) {
+		if (!ebitmap_get_bit(cats, i))
+			continue;
+
 		if (range == 0)
 			start = i;
 
@@ -1017,7 +1020,10 @@ static char *cats_ebitmap_to_str(struct ebitmap *cats, char **val_to_name)
 
 	first = 1;
 	range = 0;
-	ebitmap_for_each_positive_bit(cats, node, i) {
+	ebitmap_for_each_bit(cats, node, i) {
+		if (!ebitmap_get_bit(cats, i))
+			continue;
+
 		if (range == 0)
 			start = i;
 
@@ -1132,7 +1138,9 @@ static int write_polcap_rules_to_conf(FILE *out, struct policydb *pdb)
 		goto exit;
 	}
 
-	ebitmap_for_each_positive_bit(&pdb->policycaps, node, i) {
+	ebitmap_for_each_bit(&pdb->policycaps, node, i) {
+		if (!ebitmap_get_bit(&pdb->policycaps, i)) continue;
+
 		name = sepol_polcap_getname(i);
 		if (name == NULL) {
 			sepol_log_err("Unknown policy capability id: %i", i);
@@ -1582,7 +1590,8 @@ static int write_type_permissive_rules_to_conf(FILE *out, struct policydb *pdb)
 		goto exit;
 	}
 
-	ebitmap_for_each_positive_bit(&pdb->permissive_map, node, i) {
+	ebitmap_for_each_bit(&pdb->permissive_map, node, i) {
+		if (!ebitmap_get_bit(&pdb->permissive_map, i)) continue;
 		rc = strs_add(strs, pdb->p_type_val_to_name[i-1]);
 		if (rc != 0) {
 			goto exit;

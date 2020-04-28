@@ -14,5 +14,5 @@ int main(int argc __attribute__ ((unused)), char **argv)
 	}
 
 	printf("%d\n", rc);
-	exit(EXIT_SUCCESS);
+	exit(0);
 }

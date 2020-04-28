@@ -157,8 +157,12 @@ static int report_assertion_extended_permissions(sepol_handle_t *handle,
 	memcpy(&tmp_key, k, sizeof(avtab_key_t));
 	tmp_key.specified = AVTAB_XPERMS_ALLOWED;
 
-	ebitmap_for_each_positive_bit(sattr, snode, i) {
-		ebitmap_for_each_positive_bit(tattr, tnode, j) {
+	ebitmap_for_each_bit(sattr, snode, i) {
+		if (!ebitmap_node_get_bit(snode, i))
+			continue;
+		ebitmap_for_each_bit(tattr, tnode, j) {
+			if (!ebitmap_node_get_bit(tnode, j))
+				continue;
 			tmp_key.source_type = i + 1;
 			tmp_key.target_type = j + 1;
 			for (node = avtab_search_node(avtab, &tmp_key);
@@ -266,8 +270,13 @@ static int report_assertion_avtab_matches(avtab_key_t *k, avtab_datum_t *d, void
 			continue;
 		}
 
-		ebitmap_for_each_positive_bit(&src_matches, snode, i) {
-			ebitmap_for_each_positive_bit(&tgt_matches, tnode, j) {
+		ebitmap_for_each_bit(&src_matches, snode, i) {
+			if (!ebitmap_node_get_bit(snode, i))
+				continue;
+			ebitmap_for_each_bit(&tgt_matches, tnode, j) {
+				if (!ebitmap_node_get_bit(tnode, j))
+					continue;
+
 				if (avrule->specified == AVRULE_XPERMS_NEVERALLOW) {
 					a->errors += report_assertion_extended_permissions(handle,p, avrule,
 											i, j, cp, perms, k, avtab);
@@ -336,8 +345,12 @@ static int check_assertion_extended_permissions_avtab(avrule_t *avrule, avtab_t 
 	memcpy(&tmp_key, k, sizeof(avtab_key_t));
 	tmp_key.specified = AVTAB_XPERMS_ALLOWED;
 
-	ebitmap_for_each_positive_bit(sattr, snode, i) {
-		ebitmap_for_each_positive_bit(tattr, tnode, j) {
+	ebitmap_for_each_bit(sattr, snode, i) {
+		if (!ebitmap_node_get_bit(snode, i))
+			continue;
+		ebitmap_for_each_bit(tattr, tnode, j) {
+			if (!ebitmap_node_get_bit(tnode, j))
+				continue;
 			tmp_key.source_type = i + 1;
 			tmp_key.target_type = j + 1;
 			for (node = avtab_search_node(avtab, &tmp_key);
@@ -424,8 +437,13 @@ static int check_assertion_extended_permissions(avrule_t *avrule, avtab_t *avtab
 	for (cp = avrule->perms; cp; cp = cp->next) {
 		if (cp->tclass != k->target_class)
 			continue;
-		ebitmap_for_each_positive_bit(&src_matches, snode, i) {
-			ebitmap_for_each_positive_bit(&tgt_matches, tnode, j) {
+		ebitmap_for_each_bit(&src_matches, snode, i) {
+			if (!ebitmap_node_get_bit(snode, i))
+				continue;
+			ebitmap_for_each_bit(&tgt_matches, tnode, j) {
+				if (!ebitmap_node_get_bit(tnode, j))
+					continue;
+
 				ret = check_assertion_extended_permissions_avtab(
 						avrule, avtab, i, j, k, p);
 				if (ret)

@@ -282,13 +282,15 @@ static void display_policycaps(policydb_t * p, FILE * fp)
 	unsigned int i;
 
 	fprintf(fp, "policy capabilities:\n");
-	ebitmap_for_each_positive_bit(&p->policycaps, node, i) {
-		capname = sepol_polcap_getname(i);
-		if (capname == NULL) {
-			snprintf(buf, sizeof(buf), "unknown (%d)", i);
-			capname = buf;
+	ebitmap_for_each_bit(&p->policycaps, node, i) {
+		if (ebitmap_node_get_bit(node, i)) {
+			capname = sepol_polcap_getname(i);
+			if (capname == NULL) {
+				snprintf(buf, sizeof(buf), "unknown (%d)", i);
+				capname = buf;
+			}
+			fprintf(fp, "\t%s\n", capname);
 		}
-		fprintf(fp, "\t%s\n", capname);
 	}
 }
 
@@ -305,10 +307,12 @@ static void display_permissive(policydb_t *p, FILE *fp)
 	unsigned int i;
 
 	fprintf(fp, "permissive sids:\n");
-	ebitmap_for_each_positive_bit(&p->permissive_map, node, i) {
-		fprintf(fp, "\t");
-		display_id(p, fp, SYM_TYPES, i - 1, "");
-		fprintf(fp, "\n");
+	ebitmap_for_each_bit(&p->permissive_map, node, i) {
+		if (ebitmap_node_get_bit(node, i)) {
+			fprintf(fp, "\t");
+			display_id(p, fp, SYM_TYPES, i - 1, "");
+			fprintf(fp, "\n");
+		}
 	}
 }
 

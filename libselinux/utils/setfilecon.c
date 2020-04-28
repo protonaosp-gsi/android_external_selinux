@@ -20,5 +20,5 @@ int main(int argc, char **argv)
 			exit(2);
 		}
 	}
-	exit(EXIT_SUCCESS);
+	exit(0);
 }

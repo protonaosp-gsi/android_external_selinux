@@ -27,5 +27,5 @@ int main(int argc, char **argv)
 
 	printf("%s\n", buf);
 	freecon(buf);
-	exit(EXIT_SUCCESS);
+	exit(0);
 }

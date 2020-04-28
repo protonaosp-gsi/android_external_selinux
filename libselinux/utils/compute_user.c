@@ -27,12 +27,12 @@ int main(int argc, char **argv)
 
 	if (!buf[0]) {
 		printf("none\n");
-		exit(EXIT_SUCCESS);
+		exit(0);
 	}
 
 	for (ptr = buf; *ptr; ptr++) {
 		printf("%s\n", *ptr);
 	}
 	freeconary(buf);
-	exit(EXIT_SUCCESS);
+	exit(0);
 }

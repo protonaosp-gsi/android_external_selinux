@@ -27,11 +27,6 @@ int main(int argc, char **argv)
 		switch (opt) {
 		case 'l':
 			level = strdup(optarg);
-			if (!level) {
-				fprintf(stderr, "memory allocation failure: %d(%s)\n",
-					errno, strerror(errno));
-				return 3;
-			}
 			break;
 		default:
 			usage(argv[0], "invalid option", 1);

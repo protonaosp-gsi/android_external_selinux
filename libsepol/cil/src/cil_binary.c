@@ -441,7 +441,9 @@ int cil_roletype_to_policydb(policydb_t *pdb, const struct cil_db *db, struct ci
 		rc = __cil_get_sepol_role_datum(pdb, DATUM(role), &sepol_role);
 		if (rc != SEPOL_OK) goto exit;
 
-		ebitmap_for_each_positive_bit(role->types, tnode, i) {
+		ebitmap_for_each_bit(role->types, tnode, i) {
+			if (!ebitmap_get_bit(role->types, i)) continue;
+
 			rc = __cil_get_sepol_type_datum(pdb, DATUM(db->val_to_type[i]), &sepol_type);
 			if (rc != SEPOL_OK) goto exit;
 
@@ -650,7 +652,9 @@ int cil_typeattribute_to_bitmap(policydb_t *pdb, const struct cil_db *db, struct
 
 	value = sepol_type->s.value;
 
-	ebitmap_for_each_positive_bit(cil_attr->types, tnode, i) {
+	ebitmap_for_each_bit(cil_attr->types, tnode, i) {
+		if (!ebitmap_get_bit(cil_attr->types, i)) continue;
+
 		rc = __cil_get_sepol_type_datum(pdb, DATUM(db->val_to_type[i]), &sepol_type);
 		if (rc != SEPOL_OK) goto exit;
 
@@ -744,7 +748,11 @@ int cil_userrole_to_policydb(policydb_t *pdb, const struct cil_db *db, struct ci
 			goto exit;
 		}
 
-		ebitmap_for_each_positive_bit(user->roles, rnode, i) {
+		ebitmap_for_each_bit(user->roles, rnode, i) {
+			if (!ebitmap_get_bit(user->roles, i)) {
+				continue;
+			}
+
 			rc = __cil_get_sepol_role_datum(pdb, DATUM(db->val_to_role[i]), &sepol_role);
 			if (rc != SEPOL_OK) {
 				goto exit;
@@ -1097,11 +1105,15 @@ int __cil_type_rule_to_avtab(policydb_t *pdb, const struct cil_db *db, struct ci
 	rc = __cil_get_sepol_type_datum(pdb, DATUM(cil_rule->result), &sepol_result);
 	if (rc != SEPOL_OK) goto exit;
 
-	ebitmap_for_each_positive_bit(&src_bitmap, node1, i) {
+	ebitmap_for_each_bit(&src_bitmap, node1, i) {
+		if (!ebitmap_get_bit(&src_bitmap, i)) continue;
+
 		rc = __cil_get_sepol_type_datum(pdb, DATUM(db->val_to_type[i]), &sepol_src);
 		if (rc != SEPOL_OK) goto exit;
 
-		ebitmap_for_each_positive_bit(&tgt_bitmap, node2, j) {
+		ebitmap_for_each_bit(&tgt_bitmap, node2, j) {
+			if (!ebitmap_get_bit(&tgt_bitmap, j)) continue;
+
 			rc = __cil_get_sepol_type_datum(pdb, DATUM(db->val_to_type[j]), &sepol_tgt);
 			if (rc != SEPOL_OK) goto exit;
 
@@ -1170,11 +1182,15 @@ int __cil_typetransition_to_avtab(policydb_t *pdb, const struct cil_db *db, stru
 	rc = __cil_get_sepol_type_datum(pdb, DATUM(typetrans->result), &sepol_result);
 	if (rc != SEPOL_OK) goto exit;
 
-	ebitmap_for_each_positive_bit(&src_bitmap, node1, i) {
+	ebitmap_for_each_bit(&src_bitmap, node1, i) {
+		if (!ebitmap_get_bit(&src_bitmap, i)) continue;
+
 		rc = __cil_get_sepol_type_datum(pdb, DATUM(db->val_to_type[i]), &sepol_src);
 		if (rc != SEPOL_OK) goto exit;
 
-		ebitmap_for_each_positive_bit(&tgt_bitmap, node2, j) {
+		ebitmap_for_each_bit(&tgt_bitmap, node2, j) {
+			if (!ebitmap_get_bit(&tgt_bitmap, j)) continue;
+
 			rc = __cil_get_sepol_type_datum(pdb, DATUM(db->val_to_type[j]), &sepol_tgt);
 			if (rc != SEPOL_OK) goto exit;
 
@@ -1459,7 +1475,9 @@ int __cil_avrule_to_avtab(policydb_t *pdb, const struct cil_db *db, struct cil_a
 			goto exit;
 		}
 
-		ebitmap_for_each_positive_bit(&src_bitmap, snode, s) {
+		ebitmap_for_each_bit(&src_bitmap, snode, s) {
+			if (!ebitmap_get_bit(&src_bitmap, s)) continue;
+
 			src = DATUM(db->val_to_type[s]);
 			rc = __cil_avrule_expand(pdb, kind, src, src, classperms, cond_node, cond_flavor);
 			if (rc != SEPOL_OK) {
@@ -1488,9 +1506,11 @@ int __cil_avrule_to_avtab(policydb_t *pdb, const struct cil_db *db, struct cil_a
 				goto exit;
 			}
 
-			ebitmap_for_each_positive_bit(&src_bitmap, snode, s) {
+			ebitmap_for_each_bit(&src_bitmap, snode, s) {
+				if (!ebitmap_get_bit(&src_bitmap, s)) continue;
 				src = DATUM(db->val_to_type[s]);
-				ebitmap_for_each_positive_bit(&tgt_bitmap, tnode, t) {
+				ebitmap_for_each_bit(&tgt_bitmap, tnode, t) {
+					if (!ebitmap_get_bit(&tgt_bitmap, t)) continue;
 					tgt = DATUM(db->val_to_type[t]);
 
 					rc = __cil_avrule_expand(pdb, kind, src, tgt, classperms, cond_node, cond_flavor);
@@ -1509,7 +1529,8 @@ int __cil_avrule_to_avtab(policydb_t *pdb, const struct cil_db *db, struct cil_a
 				goto exit;
 			}
 
-			ebitmap_for_each_positive_bit(&src_bitmap, snode, s) {
+			ebitmap_for_each_bit(&src_bitmap, snode, s) {
+				if (!ebitmap_get_bit(&src_bitmap, s)) continue;
 				src = DATUM(db->val_to_type[s]);
 
 				rc = __cil_avrule_expand(pdb, kind, src, tgt, classperms, cond_node, cond_flavor);
@@ -1525,7 +1546,8 @@ int __cil_avrule_to_avtab(policydb_t *pdb, const struct cil_db *db, struct cil_a
 				goto exit;
 			}
 
-			ebitmap_for_each_positive_bit(&tgt_bitmap, tnode, t) {
+			ebitmap_for_each_bit(&tgt_bitmap, tnode, t) {
+				if (!ebitmap_get_bit(&tgt_bitmap, t)) continue;
 				tgt = DATUM(db->val_to_type[t]);
 
 				rc = __cil_avrule_expand(pdb, kind, src, tgt, classperms, cond_node, cond_flavor);
@@ -1597,7 +1619,9 @@ int __cil_permx_bitmap_to_sepol_xperms_list(ebitmap_t *xperms, struct cil_list *
 
 	start_new_range = 1;
 
-	ebitmap_for_each_positive_bit(xperms, node, i) {
+	ebitmap_for_each_bit(xperms, node, i) {
+		if (!ebitmap_get_bit(xperms, i)) continue;
+
 		if (start_new_range) {
 			low = i;
 			start_new_range = 0;
@@ -1828,7 +1852,9 @@ int cil_avrulex_to_hashtable(policydb_t *pdb, const struct cil_db *db, struct ci
 		rc = __cil_expand_type(src, &src_bitmap);
 		if (rc != SEPOL_OK) goto exit;
 
-		ebitmap_for_each_positive_bit(&src_bitmap, snode, s) {
+		ebitmap_for_each_bit(&src_bitmap, snode, s) {
+			if (!ebitmap_get_bit(&src_bitmap, s)) continue;
+
 			src = DATUM(db->val_to_type[s]);
 			rc = __cil_avrulex_to_hashtable_helper(pdb, kind, src, src, cil_avrulex->perms.x.permx, args);
 			if (rc != SEPOL_OK) {
@@ -1857,9 +1883,11 @@ int cil_avrulex_to_hashtable(policydb_t *pdb, const struct cil_db *db, struct ci
 				goto exit;
 			}
 
-			ebitmap_for_each_positive_bit(&src_bitmap, snode, s) {
+			ebitmap_for_each_bit(&src_bitmap, snode, s) {
+				if (!ebitmap_get_bit(&src_bitmap, s)) continue;
 				src = DATUM(db->val_to_type[s]);
-				ebitmap_for_each_positive_bit(&tgt_bitmap, tnode, t) {
+				ebitmap_for_each_bit(&tgt_bitmap, tnode, t) {
+					if (!ebitmap_get_bit(&tgt_bitmap, t)) continue;
 					tgt = DATUM(db->val_to_type[t]);
 
 					rc = __cil_avrulex_to_hashtable_helper(pdb, kind, src, tgt, cil_avrulex->perms.x.permx, args);
@@ -1878,7 +1906,8 @@ int cil_avrulex_to_hashtable(policydb_t *pdb, const struct cil_db *db, struct ci
 				goto exit;
 			}
 
-			ebitmap_for_each_positive_bit(&src_bitmap, snode, s) {
+			ebitmap_for_each_bit(&src_bitmap, snode, s) {
+				if (!ebitmap_get_bit(&src_bitmap, s)) continue;
 				src = DATUM(db->val_to_type[s]);
 
 				rc = __cil_avrulex_to_hashtable_helper(pdb, kind, src, tgt, cil_avrulex->perms.x.permx, args);
@@ -1894,7 +1923,8 @@ int cil_avrulex_to_hashtable(policydb_t *pdb, const struct cil_db *db, struct ci
 				goto exit;
 			}
 
-			ebitmap_for_each_positive_bit(&tgt_bitmap, tnode, t) {
+			ebitmap_for_each_bit(&tgt_bitmap, tnode, t) {
+				if (!ebitmap_get_bit(&tgt_bitmap, t)) continue;
 				tgt = DATUM(db->val_to_type[t]);
 
 				rc = __cil_avrulex_to_hashtable_helper(pdb, kind, src, tgt, cil_avrulex->perms.x.permx, args);
@@ -2337,11 +2367,15 @@ int cil_roletrans_to_policydb(policydb_t *pdb, const struct cil_db *db, struct c
 	rc = __cil_get_sepol_role_datum(pdb, DATUM(roletrans->result), &sepol_result);
 	if (rc != SEPOL_OK) goto exit;
 
-	ebitmap_for_each_positive_bit(&role_bitmap, rnode, i) {
+	ebitmap_for_each_bit(&role_bitmap, rnode, i) {
+		if (!ebitmap_get_bit(&role_bitmap, i)) continue;
+
 		rc = __cil_get_sepol_role_datum(pdb, DATUM(db->val_to_role[i]), &sepol_src);
 		if (rc != SEPOL_OK) goto exit;
 
-		ebitmap_for_each_positive_bit(&type_bitmap, tnode, j) {
+		ebitmap_for_each_bit(&type_bitmap, tnode, j) {
+			if (!ebitmap_get_bit(&type_bitmap, j)) continue;
+
 			rc = __cil_get_sepol_type_datum(pdb, DATUM(db->val_to_type[j]), &sepol_tgt);
 			if (rc != SEPOL_OK) goto exit;
 
@@ -2410,11 +2444,15 @@ int cil_roleallow_to_policydb(policydb_t *pdb, const struct cil_db *db, struct c
 	rc = __cil_expand_role(roleallow->tgt, &tgt_bitmap);
 	if (rc != SEPOL_OK) goto exit;
 
-	ebitmap_for_each_positive_bit(&src_bitmap, node1, i) {
+	ebitmap_for_each_bit(&src_bitmap, node1, i) {
+		if (!ebitmap_get_bit(&src_bitmap, i)) continue;
+
 		rc = __cil_get_sepol_role_datum(pdb, DATUM(db->val_to_role[i]), &sepol_src);
 		if (rc != SEPOL_OK) goto exit;
 
-		ebitmap_for_each_positive_bit(&tgt_bitmap, node2, j) {
+		ebitmap_for_each_bit(&tgt_bitmap, node2, j) {
+			if (!ebitmap_get_bit(&tgt_bitmap, j)) continue;
+
 			rc = __cil_get_sepol_role_datum(pdb, DATUM(db->val_to_role[j]), &sepol_tgt);
 			if (rc != SEPOL_OK) goto exit;
 
@@ -2449,7 +2487,11 @@ int __cil_constrain_expr_datum_to_sepol_expr(policydb_t *pdb, const struct cil_d
 		rc = __cil_expand_user(item->data, &user_bitmap);
 		if (rc != SEPOL_OK) goto exit;
 
-		ebitmap_for_each_positive_bit(&user_bitmap, unode, i) {
+		ebitmap_for_each_bit(&user_bitmap, unode, i) {
+			if (!ebitmap_get_bit(&user_bitmap, i)) {
+				continue;
+			}
+
 			rc = __cil_get_sepol_user_datum(pdb, DATUM(db->val_to_user[i]), &sepol_user);
 			if (rc != SEPOL_OK) {
 				ebitmap_destroy(&user_bitmap);
@@ -2471,7 +2513,9 @@ int __cil_constrain_expr_datum_to_sepol_expr(policydb_t *pdb, const struct cil_d
 		rc = __cil_expand_role(item->data, &role_bitmap);
 		if (rc != SEPOL_OK) goto exit;
 
-		ebitmap_for_each_positive_bit(&role_bitmap, rnode, i) {
+		ebitmap_for_each_bit(&role_bitmap, rnode, i) {
+			if (!ebitmap_get_bit(&role_bitmap, i)) continue;
+
 			rc = __cil_get_sepol_role_datum(pdb, DATUM(db->val_to_role[i]), &sepol_role);
 			if (rc != SEPOL_OK) {
 				ebitmap_destroy(&role_bitmap);
@@ -2513,7 +2557,9 @@ int __cil_constrain_expr_datum_to_sepol_expr(policydb_t *pdb, const struct cil_d
 		rc = __cil_expand_type(item->data, &type_bitmap);
 		if (rc != SEPOL_OK) goto exit;
 
-		ebitmap_for_each_positive_bit(&type_bitmap, tnode, i) {
+		ebitmap_for_each_bit(&type_bitmap, tnode, i) {
+			if (!ebitmap_get_bit(&type_bitmap, i)) continue;
+
 			rc = __cil_get_sepol_type_datum(pdb, DATUM(db->val_to_type[i]), &sepol_type);
 			if (rc != SEPOL_OK) {
 				ebitmap_destroy(&type_bitmap);
@@ -3110,11 +3156,15 @@ int cil_rangetransition_to_policydb(policydb_t *pdb, const struct cil_db *db, st
 
 	class_list = cil_expand_class(rangetrans->obj);
 
-	ebitmap_for_each_positive_bit(&src_bitmap, node1, i) {
+	ebitmap_for_each_bit(&src_bitmap, node1, i) {
+		if (!ebitmap_get_bit(&src_bitmap, i)) continue;
+
 		rc = __cil_get_sepol_type_datum(pdb, DATUM(db->val_to_type[i]), &sepol_src);
 		if (rc != SEPOL_OK) goto exit;
 
-		ebitmap_for_each_positive_bit(&tgt_bitmap, node2, j) {
+		ebitmap_for_each_bit(&tgt_bitmap, node2, j) {
+			if (!ebitmap_get_bit(&tgt_bitmap, j)) continue;
+
 			rc = __cil_get_sepol_type_datum(pdb, DATUM(db->val_to_type[j]), &sepol_tgt);
 			if (rc != SEPOL_OK) goto exit;
 
@@ -4443,7 +4493,8 @@ static int __cil_add_sepol_type(policydb_t *pdb, const struct cil_db *db, struct
 		ebitmap_node_t *tnode;
 		unsigned int i;
 		struct cil_typeattribute *attr = (struct cil_typeattribute *)datum;
-		ebitmap_for_each_positive_bit(attr->types, tnode, i) {
+		ebitmap_for_each_bit(attr->types, tnode, i) {
+			if (!ebitmap_get_bit(attr->types, i)) continue;
 			datum = DATUM(db->val_to_type[i]);
 			rc = __cil_get_sepol_type_datum(pdb, datum, &sepol_datum);
 			if (rc != SEPOL_OK) goto exit;
